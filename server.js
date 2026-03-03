@@ -1,31 +1,27 @@
-require('dotenv').config();
+const express = require("express");
+const path = require("path");
+const app = express();
 
-const express = require('express');
-const cors    = require('cors');
-const path    = require('path');
+// Serve static files from the public folder
+app.use(express.static(path.join(__dirname, "./public")));
 
-const app  = express();
+// Homepage route
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "./public/index.html"));
+});
+
+// Driver panel route
+app.get("/driver", (req, res) => {
+  res.sendFile(path.join(__dirname, "./public/driver.html"));
+});
+
+// Optional: other routes if you add more HTML pages
+// app.get("/commuter", (req, res) => {
+//   res.sendFile(path.join(__dirname, "./public/commuter.html"));
+// });
+
+// Start the server
 const PORT = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(express.json());
-
-// Serve public folder
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Explicit root route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Serve admin folder
-app.use('/admin', express.static(path.join(__dirname, 'admin')));
-
-// Test route
-app.get('/ping', (req, res) => {
-  res.json({ status: 'ok', message: 'Bus Tracker server is running!' });
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('Bus Tracker Server Started!');
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

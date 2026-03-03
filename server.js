@@ -23,6 +23,9 @@ app.use(express.json());
 // When someone goes to http://localhost:3000
 // the server sends files from the 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
  
 // When someone goes to http://localhost:3000/admin/...
 // the server sends files from the 'admin' folder

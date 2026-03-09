@@ -1,6 +1,6 @@
 let map = L.map('map').setView([13.0827,80.2707],19);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 let userMarker;
 let busMarker;
@@ -8,29 +8,26 @@ let routeLine;
 
 let userLat;
 let userLng;
-
 let oldDistance=null;
 
-// Bus icon
 let busIcon = L.icon({
 iconUrl:"https://cdn-icons-png.flaticon.com/512/61/61231.png",
 iconSize:[40,40]
 });
 
-// Get commuter location
+// Get commuter location continuously
 navigator.geolocation.watchPosition(
 
-function(position){
+(position)=>{
 
 userLat = position.coords.latitude;
 userLng = position.coords.longitude;
 
-// Create commuter marker
 if(!userMarker){
 
 userMarker = L.marker([userLat,userLng])
 .addTo(map)
-.bindPopup("Commuter Location")
+.bindPopup("Your Location")
 .openPopup();
 
 map.setView([userLat,userLng],19);
@@ -43,9 +40,7 @@ userMarker.setLatLng([userLat,userLng]);
 
 },
 
-function(error){
-console.log(error);
-},
+(error)=>{console.log(error);},
 
 {
 enableHighAccuracy:true,
@@ -56,7 +51,7 @@ timeout:10000
 );
 
 
-// Update bus location every 5 seconds
+// Fetch bus location every second
 setInterval(()=>{
 
 fetch("/bus-location")
@@ -65,7 +60,7 @@ fetch("/bus-location")
 
 if(!data.lat) return;
 
-// Create or update bus marker
+// create marker first time
 if(!busMarker){
 
 busMarker = L.marker([data.lat,data.lng],{icon:busIcon})
@@ -74,11 +69,12 @@ busMarker = L.marker([data.lat,data.lng],{icon:busIcon})
 
 }else{
 
+// smoothly move marker
 busMarker.setLatLng([data.lat,data.lng]);
 
 }
 
-// Draw route line
+// draw route
 if(routeLine){
 map.removeLayer(routeLine);
 }
@@ -91,43 +87,34 @@ color:"blue",
 weight:4
 }).addTo(map);
 
-// Fit both markers in view
-let bounds = L.latLngBounds([
-[userLat,userLng],
-[data.lat,data.lng]
-]);
-
-map.fitBounds(bounds);
-
-// Calculate distance
+// distance
 let distance = getDistance(userLat,userLng,data.lat,data.lng);
 
-let statusText = "Distance: " + (distance*1000).toFixed(1) + " meters";
+let status = "Distance: "+(distance*1000).toFixed(1)+" meters";
 
-if(oldDistance !== null){
+if(oldDistance!=null){
 
 if(distance < oldDistance){
-statusText += "<br>Bus moving towards you";
-}
-else{
-statusText += "<br>Bus moving away from you";
+status += "<br>Bus moving towards you";
+}else{
+status += "<br>Bus moving away";
 }
 
 }
 
 oldDistance = distance;
 
-document.getElementById("status").innerHTML = statusText;
+document.getElementById("status").innerHTML=status;
 
 });
 
-},5000);
+},1000);
 
 
-// Haversine distance formula
+// distance calculation
 function getDistance(lat1,lon1,lat2,lon2){
 
-const R = 6371;
+const R=6371;
 
 let dLat=(lat2-lat1)*Math.PI/180;
 let dLon=(lon2-lon1)*Math.PI/180;

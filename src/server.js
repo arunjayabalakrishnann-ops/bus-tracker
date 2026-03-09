@@ -7,10 +7,14 @@ app.use(express.static("public"));
 
 io.on("connection",(socket)=>{
 
+console.log("User connected");
+
 socket.on("busLocation",(data)=>{
-
 io.emit("busLocation",data);
+});
 
+socket.on("disconnect",()=>{
+console.log("User disconnected");
 });
 
 });
@@ -18,5 +22,5 @@ io.emit("busLocation",data);
 const PORT = process.env.PORT || 3000;
 
 http.listen(PORT,()=>{
-console.log("Server running");
+console.log("Server running on port",PORT);
 });

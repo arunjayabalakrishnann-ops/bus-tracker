@@ -2,19 +2,24 @@ const socket = io();
 
 function sendLocation(position){
 
-let lat = position.coords.latitude;
-let lng = position.coords.longitude;
+const lat = position.coords.latitude;
+const lng = position.coords.longitude;
+const accuracy = position.coords.accuracy;
+
+if(accuracy < 50){
 
 socket.emit("busLocation",{lat,lng});
 
 }
 
-function error(){
-alert("Unable to get location");
+}
+
+function error(err){
+console.log(err);
 }
 
 navigator.geolocation.watchPosition(sendLocation,error,{
 enableHighAccuracy:true,
 maximumAge:0,
-timeout:5000
+timeout:10000
 });

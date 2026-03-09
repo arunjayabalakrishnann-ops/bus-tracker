@@ -1,49 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Driver Panel</title>
+<title>Driver GPS</title>
 </head>
 
 <body>
 
-<h2>Driver Panel</h2>
-<p>Bus GPS sharing active...</p>
+<h2>Driver Location Sharing</h2>
 
-<script>
-
-navigator.geolocation.watchPosition(
-
-function(position){
-
-let lat = position.coords.latitude;
-let lng = position.coords.longitude;
-
-fetch("/update-location",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-lat:lat,
-lng:lng
-})
-});
-
-},
-
-function(error){
-console.log(error);
-},
-
-{
-enableHighAccuracy:true,
-maximumAge:0,
-timeout:10000
-}
-
-);
-
-</script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="driver.js"></script>
 
 </body>
 </html>

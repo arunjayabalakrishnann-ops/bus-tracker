@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 <title>Driver Panel</title>
 </head>
@@ -8,17 +7,16 @@
 <body>
 
 <h2>Driver Panel</h2>
-
-<p id="msg">Sharing location...</p>
+<p>Bus GPS sharing active...</p>
 
 <script>
 
-function sendLocation(){
+navigator.geolocation.watchPosition(
 
-navigator.geolocation.getCurrentPosition((pos)=>{
+function(position){
 
-let lat = pos.coords.latitude;
-let lng = pos.coords.longitude;
+let lat = position.coords.latitude;
+let lng = position.coords.longitude;
 
 fetch("/update-location",{
 method:"POST",
@@ -31,11 +29,19 @@ lng:lng
 })
 });
 
-});
+},
 
+function(error){
+console.log(error);
+},
+
+{
+enableHighAccuracy:true,
+maximumAge:0,
+timeout:10000
 }
 
-setInterval(sendLocation,3000);
+);
 
 </script>
 

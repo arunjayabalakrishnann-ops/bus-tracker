@@ -1,20 +1,30 @@
 const express = require("express");
-const path = require("path");
+const cors = require("cors");
 
 const app = express();
 
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.json());
+app.use(cors());
+app.use(express.static("public"));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+let busLocation = { lat: null, lng: null };
+
+app.post("/update-location", (req, res) => {
+    const { lat, lng } = req.body;
+
+    busLocation = { lat, lng };
+
+    console.log("Bus Location Updated:", busLocation);
+
+    res.json({ status: "ok" });
 });
 
-app.get("/driver", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "driver.html"));
+app.get("/bus-location", (req, res) => {
+    res.json(busLocation);
 });
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+    console.log("Server running on port", PORT);
 });

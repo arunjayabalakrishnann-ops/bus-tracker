@@ -1,91 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🚌 Bus Tracker</title>
-  <link rel="stylesheet" href="style.css">
- 
-  <!-- Leaflet Maps — Free, no API key needed -->
-  <link rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
- 
-  <!-- Firebase JavaScript SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+<title>Bus Tracker</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+<style>
+#map{
+height:500px;
+}
+</style>
+
 </head>
+
 <body>
- 
-  <div id="app">
- 
-    <!-- ══ HEADER ══════════════════════════════════════════════ -->
-    <header class="app-header">
-      <span class="header-bus">🚌</span>
-      <div>
-        <h1>Bus Tracker</h1>
-        <small>Find your nearest bus in real-time</small>
-      </div>
-      <span class="live-pill" id="live-pill">● LIVE</span>
-    </header>
- 
-    <!-- ══ STEP 1 — Location ════════════════════════════════════ -->
-    <div class="card" id="step1">
-      <div class="step-tag">Step 1 of 4</div>
-      <h2>📍 Allow Location Access</h2>
-      <p>We need your GPS location to find the nearest bus to you.</p>
-      <button id="btn-location" onclick="getLocation()">
-        Allow Location Access
-      </button>
-    </div>
- 
-    <!-- ══ STEP 2 — Select Route ════════════════════════════════ -->
-    <div class="card hidden" id="step2">
-      <div class="step-tag">Step 2 of 4</div>
-      <h2>🚍 Select Your Bus Route</h2>
-      <p>Choose the bus number / route you want to take.</p>
-      <div class="select-wrap">
-        <label for="route-select">Bus Route</label>
-        <select id="route-select" onchange="onRouteSelected()">
-          <option value="">-- Choose a Route --</option>
-        </select>
-      </div>
-    </div>
- 
-    <!-- ══ STEP 3 — Select Destination ═════════════════════════ -->
-    <div class="card hidden" id="step3">
-      <div class="step-tag">Step 3 of 4</div>
-      <h2>🏁 Where Are You Going?</h2>
-      <p>Select the stop where you want to get off.</p>
-      <div class="select-wrap">
-        <label for="dest-select">Destination Stop</label>
-        <select id="dest-select" onchange="onDestinationSelected()">
-          <option value="">-- Select Your Stop --</option>
-        </select>
-      </div>
-    </div>
- 
-    <!-- ══ STEP 4 — Results ══════════════════════════════════════ -->
-    <div class="card hidden" id="step4">
-      <div class="step-tag">Step 4 of 4 — Nearest Bus Found</div>
-      <h2>🚌 Your Nearest Bus</h2>
-      <div id="bus-info-container"></div>
-      <div id="map" style="height: 300px; border-radius: 12px; margin-top: 16px;"></div>
-      <button class="btn-secondary" onclick="resetApp()" style="margin-top: 14px;">
-        ← Choose a Different Route
-      </button>
-    </div>
- 
-    <!-- Loading message -->
-    <div id="loading" class="hidden">
-      <p class="loading-text">⏳ Loading bus data...</p>
-    </div>
- 
-  </div><!-- end #app -->
- 
-  <!-- Load your Firebase config first, then your app logic -->
-  <script src="firebase-config.js"></script>
-  <script src="app.js"></script>
- 
+
+<h2>Live Bus Tracking</h2>
+
+<p id="status"></p>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="script.js"></script>
+
 </body>
 </html>

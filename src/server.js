@@ -1,9 +1,21 @@
 const express = require("express");
-const app = express();
-const http = require("http").createServer(app);
-const io = require("socket.io")(http);
+const http = require("http");
+const socketIo = require("socket.io");
+const path = require("path");
 
-app.use(express.static("public"));
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/driver.html", (req, res) => {
+res.sendFile(path.join(__dirname, "public", "driver.html"));
+});
 
 io.on("connection",(socket)=>{
 
@@ -21,6 +33,6 @@ console.log("User disconnected");
 
 const PORT = process.env.PORT || 3000;
 
-http.listen(PORT,()=>{
-console.log("Server running on port",PORT);
+server.listen(PORT,()=>{
+console.log("Server running on port "+PORT);
 });

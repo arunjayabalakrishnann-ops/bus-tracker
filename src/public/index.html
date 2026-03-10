@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
-<title>Bus Tracker</title>
+<title>College Bus Tracker</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
@@ -10,11 +11,30 @@
 
 body{
 margin:0;
+font-family:Arial;
 }
 
 #map{
 height:100vh;
-width:100%;
+width:75%;
+float:left;
+}
+
+#panel{
+width:25%;
+height:100vh;
+float:right;
+background:#f4f4f4;
+padding:15px;
+box-sizing:border-box;
+}
+
+h2{
+margin-top:0;
+}
+
+.info{
+margin-bottom:10px;
 }
 
 </style>
@@ -25,9 +45,28 @@ width:100%;
 
 <div id="map"></div>
 
+<div id="panel">
+
+<h2>Bus Information</h2>
+
+<div class="info">Bus ID: BUS-01</div>
+
+<div class="info" id="status">Driver Status: Waiting</div>
+
+<div class="info" id="distance">Distance: --</div>
+
+<div class="info" id="direction">Direction: --</div>
+
+<div class="info" id="eta">ETA: --</div>
+
+<div class="info" id="update">Last Update: --</div>
+
+</div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="script.js"></script>
 
 </body>
+
 </html>

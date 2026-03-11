@@ -6,34 +6,19 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
 maxZoom:19
 }).addTo(map);
 
-let busMarker=null;
+// bus icon
+const busIcon = L.icon({
+iconUrl:"bus.png",
+iconSize:[40,40]
+});
+
 let userMarker=null;
-let previousDistance=null;
 
-const busIcon=L.icon({
-iconUrl:"https://cdn-icons-png.flaticon.com/512/61/61231.png",
-iconSize:[35,35]
-});
+let buses={};
 
-const routeLine=L.polyline([],{
-color:"blue",
-weight:5
-}).addTo(map);
+let previousDistances={};
 
-const stops=[
-[13.0827,80.2707,"College Gate"],
-[13.0830,80.2710,"Library"],
-[13.0834,80.2714,"Admin Block"],
-[13.0837,80.2718,"Hostel"]
-];
-
-stops.forEach(stop=>{
-L.marker([stop[0],stop[1]])
-.addTo(map)
-.bindPopup(stop[2]);
-});
-
-function distance(lat1,lon1,lat2,lon2){
+function getDistance(lat1,lon1,lat2,lon2){
 
 const R=6371;
 
@@ -54,64 +39,62 @@ return R*c;
 
 socket.on("busLocation",(data)=>{
 
-document.getElementById("status").innerText="Driver Status: Active";
-
+const id=data.busId;
 const lat=data.lat;
 const lng=data.lng;
+const crowd=data.crowd;
 
-if(!busMarker){
+if(!buses[id]){
 
-busMarker=L.marker([lat,lng],{icon:busIcon}).addTo(map);
+buses[id]=L.marker([lat,lng],{icon:busIcon})
+.addTo(map)
+.bindPopup(id);
 
 }else{
 
-busMarker.setLatLng([lat,lng]);
+buses[id].setLatLng([lat,lng]);
 
 }
-
-routeLine.addLatLng([lat,lng]);
-
-document.getElementById("update").innerText=
-"Last Update: "+new Date().toLocaleTimeString();
 
 if(userMarker){
 
 const user=userMarker.getLatLng();
 
-const dist=distance(user.lat,user.lng,lat,lng);
+const dist=getDistance(user.lat,user.lng,lat,lng);
 
-document.getElementById("distance").innerText=
-"Distance: "+(dist*1000).toFixed(0)+" meters";
+const meters=(dist*1000).toFixed(0);
+
+let direction="--";
+
+if(previousDistances[id]){
+
+if(dist<previousDistances[id]){
+direction="Approaching";
+}else{
+direction="Moving Away";
+}
+
+}
+
+previousDistances[id]=dist;
 
 const speed=20;
 
 const eta=(dist/speed)*60;
 
-document.getElementById("eta").innerText=
-"ETA: "+eta.toFixed(1)+" min";
-
-if(previousDistance!==null){
-
-if(dist<previousDistance){
-
-document.getElementById("direction").innerText=
-"Direction: Bus approaching";
-
-}else{
-
-document.getElementById("direction").innerText=
-"Direction: Bus moving away";
-
-}
-
-}
-
-previousDistance=dist;
+buses[id].bindPopup(
+id+
+"<br>Distance: "+meters+" m"+
+"<br>Direction: "+direction+
+"<br>ETA: "+eta.toFixed(1)+" min"+
+"<br>Crowd: "+crowd
+);
 
 }
 
 });
 
+// user location
 navigator.geolocation.watchPosition((position)=>{
 
 const lat=position.coords.latitude;
@@ -119,8 +102,9 @@ const lng=position.coords.longitude;
 
 if(!userMarker){
 
-userMarker=L.marker([lat,lng]).addTo(map)
-.bindPopup("Your Location");
+userMarker=L.marker([lat,lng])
+.addTo(map)
+.bindPopup("You");
 
 map.setView([lat,lng],19);
 

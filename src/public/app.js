@@ -1,6 +1,5 @@
 // ── app.js — Bus Tracker Commuter App ──────────────────────────
 
-// ── Global Variables ────────────────────────────────────────────
 let userLat          = null;
 let userLng          = null;
 let selectedRoute    = null;
@@ -13,12 +12,12 @@ let etaInterval      = null;
 let currentEtaMins   = 0;
 let routeStopsData   = [];
 
-// ── Bus Icon ─────────────────────────────────────────────────────
+// ── Bus Icon using bus.png ───────────────────────────────────────
 const busIcon = L.icon({
-  iconUrl:    '/bus.png',
-  iconSize:   [40, 40],
-  iconAnchor: [20, 20],
-  popupAnchor:[0, -20]
+  iconUrl:     '/bus.png',
+  iconSize:    [40, 40],
+  iconAnchor:  [20, 20],
+  popupAnchor: [0, -20]
 });
 
 // ════════════════════════════════════════════════════════════════
@@ -52,7 +51,7 @@ function getLocation() {
       btn.textContent = 'Allow Location Access';
       btn.disabled = false;
       if (error.code === 1)
-        alert('Location blocked. Click the lock icon in the browser address bar → Allow Location → Refresh.');
+        alert('Location blocked. Click the lock icon → Allow Location → Refresh.');
       else if (error.code === 2)
         alert('GPS not available. Make sure location is ON on your device.');
       else
@@ -80,7 +79,6 @@ function loadRoutes() {
       }
 
       select.innerHTML = '<option value="">-- Choose a Route --</option>';
-
       Object.keys(data).forEach(function(key) {
         const option       = document.createElement('option');
         option.value       = key;
@@ -95,7 +93,6 @@ function loadRoutes() {
     });
 }
 
-// Called when user picks a route
 function onRouteSelected() {
   const routeKey = document.getElementById('route-select').value;
   if (!routeKey) return;
@@ -104,18 +101,12 @@ function onRouteSelected() {
   db.ref('routes/' + routeKey + '/stops').once('value')
     .then(function(snap) {
       const stops = snap.val();
-      console.log('Stops loaded:', stops);
-
-      if (!stops) {
-        alert('No stops found for this route in Firebase.');
-        return;
-      }
+      if (!stops) { alert('No stops found for this route.'); return; }
 
       routeStopsData = Array.isArray(stops) ? stops : Object.values(stops);
 
       const destSelect = document.getElementById('dest-select');
       destSelect.innerHTML = '<option value="">-- Select Your Stop --</option>';
-
       routeStopsData.forEach(function(stop, index) {
         const opt       = document.createElement('option');
         opt.value       = index;
@@ -125,10 +116,7 @@ function onRouteSelected() {
 
       showCard('step3');
     })
-    .catch(function(err) {
-      console.error('Stops error:', err);
-      alert('Error loading stops: ' + err.message);
-    });
+    .catch(function(err) { alert('Error loading stops: ' + err.message); });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -140,17 +128,11 @@ function onDestinationSelected() {
 
   showCard('step4');
 
-  if (realtimeListener) {
-    db.ref('buses').off('value', realtimeListener);
-    realtimeListener = null;
-  }
-
-  if (etaInterval) { clearInterval(etaInterval); etaInterval = null; }
+  if (realtimeListener) { db.ref('buses').off('value', realtimeListener); realtimeListener = null; }
+  if (etaInterval)      { clearInterval(etaInterval); etaInterval = null; }
 
   realtimeListener = db.ref('buses').on('value', function(snapshot) {
-    const allBuses = snapshot.val();
-    console.log('Bus data updated:', allBuses);
-    findAndShowNearestBus(allBuses);
+    findAndShowNearestBus(snapshot.val());
   });
 }
 
@@ -174,27 +156,21 @@ function findAndShowNearestBus(allBuses) {
     }
   });
 
-  if (nearestBus) {
-    showBusInfo(nearestId, nearestBus, nearestDist);
-  } else {
-    showNoBus();
-  }
+  nearestBus ? showBusInfo(nearestId, nearestBus, nearestDist) : showNoBus();
 }
 
 function showNoBus() {
   document.getElementById('bus-info-container').innerHTML =
-    '<p style="color:#FF5722;text-align:center;padding:20px">No buses active on this route right now.<br>Ask your friend to open the Driver page and start tracking.</p>';
+    '<p style="color:#FF5722;text-align:center;padding:20px">No buses active on this route right now.</p>';
 }
 
 // ════════════════════════════════════════════════════════════════
-//  SHOW BUS INFO CARD + START ETA COUNTDOWN
+//  SHOW BUS INFO
 // ════════════════════════════════════════════════════════════════
 function showBusInfo(busId, busData, distKm) {
   const distMetres = Math.round(distKm * 1000);
   const distText   = distMetres < 1000 ? distMetres + ' m' : distKm.toFixed(1) + ' km';
-
-  currentEtaMins = Math.max(1, Math.round((distKm / 20) * 60));
-
+  currentEtaMins   = Math.max(1, Math.round((distKm / 20) * 60));
   const crowdClass = 'crowd-' + (busData.crowd || 'Low');
 
   document.getElementById('bus-info-container').innerHTML = `
@@ -234,7 +210,7 @@ function showBusInfo(busId, busData, distKm) {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  MAP — Show route line + bus icon (bus.png) + user pin
+//  MAP
 // ════════════════════════════════════════════════════════════════
 function updateMap(busLat, busLng) {
   if (!mapInstance) {
@@ -243,7 +219,6 @@ function updateMap(busLat, busLng) {
       attribution: '© OpenStreetMap', maxZoom: 18
     }).addTo(mapInstance);
 
-    // User marker — blue dot
     userMarker = L.marker([userLat, userLng], {
       icon: L.divIcon({
         className: '',
@@ -252,7 +227,6 @@ function updateMap(busLat, busLng) {
       })
     }).addTo(mapInstance).bindPopup('<b>📍 You are here</b>').openPopup();
 
-    // Route line + stop circles
     if (routeStopsData.length >= 2) {
       const latlngs = routeStopsData.map(s => [s.lat, s.lng]);
       routeLine = L.polyline(latlngs, {
@@ -268,7 +242,7 @@ function updateMap(busLat, busLng) {
     }
   }
 
-  // Bus marker — uses bus.png image
+  // Bus marker — uses bus.png
   if (busMarker) {
     busMarker.setLatLng([busLat, busLng]);
   } else {
@@ -277,7 +251,6 @@ function updateMap(busLat, busLng) {
       .bindPopup('<b>🚌 Bus is here</b>');
   }
 
-  // Fit map to show both user and bus
   try {
     const group = L.featureGroup([userMarker, busMarker]);
     mapInstance.fitBounds(group.getBounds().pad(0.3));
@@ -285,7 +258,7 @@ function updateMap(busLat, busLng) {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  HAVERSINE DISTANCE FORMULA
+//  DISTANCE FORMULA
 // ════════════════════════════════════════════════════════════════
 function calcDistanceKm(lat1, lng1, lat2, lng2) {
   const R    = 6371;

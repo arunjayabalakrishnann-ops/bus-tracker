@@ -6,34 +6,13 @@ maxZoom:19
 
 
 // BUS ICON
-const busIcon = L.icon({
-iconUrl:"/bus.png",
-iconSize:[40,40],
-iconAnchor:[20,20]
+const busIcon=L.icon({
+iconUrl:"bus.png",
+iconSize:[40,40]
 });
 
 let userMarker;
 let buses={};
-
-
-// DISTANCE FUNCTION
-function distance(lat1,lon1,lat2,lon2){
-
-const R=6371;
-
-const dLat=(lat2-lat1)*Math.PI/180;
-const dLon=(lon2-lon1)*Math.PI/180;
-
-const a=
-Math.sin(dLat/2)*Math.sin(dLat/2)+
-Math.cos(lat1*Math.PI/180)*
-Math.cos(lat2*Math.PI/180)*
-Math.sin(dLon/2)*Math.sin(dLon/2);
-
-const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-
-return R*c;
-}
 
 
 // USER LOCATION
@@ -44,9 +23,8 @@ const lng=pos.coords.longitude;
 
 if(!userMarker){
 
-userMarker=L.marker([lat,lng])
-.addTo(map)
-.bindPopup("Your Location");
+userMarker=L.marker([lat,lng]).addTo(map)
+.bindPopup("You");
 
 map.setView([lat,lng],18);
 
@@ -56,40 +34,39 @@ userMarker.setLatLng([lat,lng]);
 
 }
 
+});
 
-// FETCH BUS DATA
-fetch("/bus-data")
-.then(res=>res.json())
-.then(data=>{
 
-data.forEach(bus=>{
+// FIREBASE BUS TRACKING
+db.ref("buses").on("value",snapshot=>{
 
-const d=distance(lat,lng,bus.lat,bus.lng);
-const eta=(d/20*60).toFixed(1);
+const data=snapshot.val();
+
+for(let id in data){
+
+const bus=data[id];
+
+const lat=bus.lat;
+const lng=bus.lng;
 
 const info=
 "<b>"+bus.name+"</b><br>"+
-"Distance: "+d.toFixed(2)+" km<br>"+
-"ETA: "+eta+" min<br>"+
-"Crowd: "+bus.crowd;
+"Crowd: "+bus.crowd+"<br>"+
+"ETA: "+bus.eta+" min";
 
-if(!buses[bus.name]){
+if(!buses[id]){
 
-buses[bus.name]=L.marker([bus.lat,bus.lng],{icon:busIcon})
+buses[id]=L.marker([lat,lng],{icon:busIcon})
 .addTo(map)
 .bindPopup(info);
 
 }else{
 
-buses[bus.name].setLatLng([bus.lat,bus.lng]);
-buses[bus.name].setPopupContent(info);
+buses[id].setLatLng([lat,lng]);
+buses[id].setPopupContent(info);
 
 }
 
-});
+}
 
-});
-
-},{
-enableHighAccuracy:true
 });

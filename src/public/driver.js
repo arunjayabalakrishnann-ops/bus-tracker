@@ -1,25 +1,19 @@
-const busName = prompt("Enter Bus Name (BUS1 or BUS2)");
-const crowd = prompt("Crowd Level (Low / Medium / High)");
+const busId=prompt("Enter Bus Name (BUS1 or BUS2)");
+
+const crowd=prompt("Crowd Level (Low / Medium / High)");
 
 navigator.geolocation.watchPosition(pos=>{
 
 const lat=pos.coords.latitude;
 const lng=pos.coords.longitude;
 
-fetch("/update-bus",{
+db.ref("buses/"+busId).set({
 
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-name:busName,
+name:busId,
 lat:lat,
 lng:lng,
-crowd:crowd
-})
+crowd:crowd,
+eta:Math.floor(Math.random()*10+1)
 
 });
 

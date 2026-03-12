@@ -1,25 +1,33 @@
-const socket = io();
+const busName = prompt("Enter Bus Name (BUS1 or BUS2)");
 
-const busId = prompt("Enter Bus Name (BUS1 or BUS2)");
+const crowd = prompt("Crowd level (Low / Medium / High)");
 
-const crowdLevels = ["Low","Medium","High"];
+navigator.geolocation.watchPosition(position => {
 
-navigator.geolocation.watchPosition((pos)=>{
+  const lat = position.coords.latitude;
+  const lng = position.coords.longitude;
 
-const lat = pos.coords.latitude;
-const lng = pos.coords.longitude;
+  fetch("/update-bus", {
 
-const crowd = crowdLevels[Math.floor(Math.random()*3)];
+    method: "POST",
 
-socket.emit("busLocation",{
-busId: busId,
-lat: lat,
-lng: lng,
-crowd: crowd
-});
+    headers: {
+      "Content-Type": "application/json"
+    },
 
-},{
-enableHighAccuracy:true,
-maximumAge:0,
-timeout:5000
+    body: JSON.stringify({
+      name: busName,
+      lat: lat,
+      lng: lng,
+      crowd: crowd
+    })
+
+  });
+
+}, {
+
+  enableHighAccuracy: true,
+  maximumAge: 0,
+  timeout: 10000
+
 });

@@ -1,73 +1,102 @@
-const socket = io();
+// Initialize map
+const map = L.map("map").setView([11.0168, 76.9558], 17);
 
-// create map
-const map = L.map('map').setView([11.0168, 76.9558], 18);
-
-// map tiles
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-maxZoom: 19
+// Map tiles
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19
 }).addTo(map);
 
-
-// BUS ICON
+// Bus Icon
 const busIcon = L.icon({
-iconUrl: "https://cdn-icons-png.flaticon.com/512/61/61231.png",
-iconSize: [40,40],
-iconAnchor: [20,20]
+  iconUrl: "/bus.png",
+  iconSize: [40, 40],
+  iconAnchor: [20, 20]
 });
 
+// User location marker
+let userMarker;
 
-let busMarker = null;
-let userMarker = null;
+// Bus markers
+let buses = {};
 
+// Distance calculation
+function distance(lat1, lon1, lat2, lon2) {
 
-// receive bus GPS
-socket.on("busLocation",(data)=>{
+  const R = 6371;
 
-const lat = data.lat;
-const lng = data.lng;
-const busName = data.busId;
-const crowd = data.crowd;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
 
-if(!busMarker){
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
 
-busMarker = L.marker([lat,lng],{
-icon: busIcon
-}).addTo(map);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
+  return R * c;
 }
 
-busMarker.setLatLng([lat,lng]);
+// Track commuter location
+navigator.geolocation.watchPosition(position => {
 
-busMarker.bindPopup(
-"<b>"+busName+"</b><br>" +
-"Crowd: "+crowd
-);
+  const lat = position.coords.latitude;
+  const lng = position.coords.longitude;
 
-});
+  if (!userMarker) {
 
+    userMarker = L.marker([lat, lng]).addTo(map)
+      .bindPopup("You are here");
 
-// commuter location
-navigator.geolocation.watchPosition((pos)=>{
+    map.setView([lat, lng], 18);
 
-const lat = pos.coords.latitude;
-const lng = pos.coords.longitude;
+  } else {
 
-if(!userMarker){
+    userMarker.setLatLng([lat, lng]);
 
-userMarker = L.marker([lat,lng]).addTo(map)
-.bindPopup("You are here");
+  }
 
-map.setView([lat,lng],18);
+  // Fetch buses
+  fetch("/bus-data")
+    .then(res => res.json())
+    .then(data => {
 
-}else{
+      data.forEach(bus => {
 
-userMarker.setLatLng([lat,lng]);
+        const d = distance(lat, lng, bus.lat, bus.lng);
 
-}
+        const eta = (d / 20 * 60).toFixed(1);
 
-},{
-enableHighAccuracy:true,
-maximumAge:0,
-timeout:5000
+        const info =
+          "<b>" + bus.name + "</b><br>" +
+          "Distance: " + d.toFixed(2) + " km<br>" +
+          "ETA: " + eta + " min<br>" +
+          "Crowd: " + bus.crowd;
+
+        if (!buses[bus.name]) {
+
+          buses[bus.name] =
+            L.marker([bus.lat, bus.lng], { icon: busIcon })
+              .addTo(map)
+              .bindPopup(info);
+
+        } else {
+
+          buses[bus.name].setLatLng([bus.lat, bus.lng]);
+          buses[bus.name].setPopupContent(info);
+
+        }
+
+      });
+
+    });
+
+}, {
+
+  enableHighAccuracy: true,
+  maximumAge: 0,
+  timeout: 10000
+
 });

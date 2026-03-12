@@ -1,19 +1,19 @@
 const socket = io();
 
-// Create map
+// create map
 const map = L.map('map').setView([11.0168, 76.9558], 18);
 
-// Map tiles
+// map tiles
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
+maxZoom: 19
 }).addTo(map);
 
 
-// BUS ICON (ONLINE IMAGE — GUARANTEED TO LOAD)
+// BUS ICON
 const busIcon = L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/3448/3448339.png",
-    iconSize: [50, 50],
-    iconAnchor: [25, 25]
+iconUrl: "https://cdn-icons-png.flaticon.com/512/61/61231.png",
+iconSize: [40,40],
+iconAnchor: [20,20]
 });
 
 
@@ -21,52 +21,53 @@ let busMarker = null;
 let userMarker = null;
 
 
-// RECEIVE BUS GPS
-socket.on("busLocation", (data) => {
+// receive bus GPS
+socket.on("busLocation",(data)=>{
 
-    const lat = data.lat;
-    const lng = data.lng;
-    const crowd = data.crowd;
-    const busId = data.busId;
+const lat = data.lat;
+const lng = data.lng;
+const busName = data.busId;
+const crowd = data.crowd;
 
-    if (!busMarker) {
+if(!busMarker){
 
-        busMarker = L.marker([lat, lng], {
-            icon: busIcon
-        }).addTo(map);
+busMarker = L.marker([lat,lng],{
+icon: busIcon
+}).addTo(map);
 
-    }
+}
 
-    busMarker.setLatLng([lat, lng]);
+busMarker.setLatLng([lat,lng]);
 
-    busMarker.bindPopup(
-        "<b>" + busId + "</b><br>" +
-        "Crowd Level: " + crowd
-    );
+busMarker.bindPopup(
+"<b>"+busName+"</b><br>" +
+"Crowd: "+crowd
+);
 
 });
 
 
-// USER LOCATION
-navigator.geolocation.watchPosition((pos) => {
+// commuter location
+navigator.geolocation.watchPosition((pos)=>{
 
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
+const lat = pos.coords.latitude;
+const lng = pos.coords.longitude;
 
-    if (!userMarker) {
+if(!userMarker){
 
-        userMarker = L.marker([lat, lng])
-            .addTo(map)
-            .bindPopup("Your Location");
+userMarker = L.marker([lat,lng]).addTo(map)
+.bindPopup("You are here");
 
-        map.setView([lat, lng], 18);
+map.setView([lat,lng],18);
 
-    } else {
+}else{
 
-        userMarker.setLatLng([lat, lng]);
+userMarker.setLatLng([lat,lng]);
 
-    }
+}
 
-}, {
-    enableHighAccuracy: true
+},{
+enableHighAccuracy:true,
+maximumAge:0,
+timeout:5000
 });

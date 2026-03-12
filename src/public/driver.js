@@ -33,3 +33,21 @@ function startTracking() {
     { enableHighAccuracy: true }
   );
 }
+
+startTracking();
+```
+
+---
+
+**After replacing all 5 files:**
+
+**In Render dashboard change:**
+- Root Directory: `./src`
+- Build Command: `npm install`
+- Start Command: `node server.js`
+
+**Then push:**
+```
+git add .
+git commit -m "Final clean rebuild"
+git push

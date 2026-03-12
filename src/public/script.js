@@ -1,72 +1,74 @@
-const map = L.map("map").setView([11.0168,76.9558],17);
+const map = L.map("map").setView([11.0168,76.9558],17)
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
 maxZoom:19
-}).addTo(map);
+}).addTo(map)
 
-
-// BUS ICON
-const busIcon=L.icon({
-iconUrl:"bus.png",
+const busIcon = L.icon({
+iconUrl:"/bus.png",
 iconSize:[40,40]
-});
+})
 
-let userMarker;
-let buses={};
+let userMarker
 
+navigator.geolocation.watchPosition((pos)=>{
 
-// USER LOCATION
-navigator.geolocation.watchPosition(pos=>{
-
-const lat=pos.coords.latitude;
-const lng=pos.coords.longitude;
+const lat = pos.coords.latitude
+const lng = pos.coords.longitude
 
 if(!userMarker){
 
-userMarker=L.marker([lat,lng]).addTo(map)
-.bindPopup("You");
+userMarker = L.marker([lat,lng])
+.addTo(map)
+.bindPopup("Your Location")
 
-map.setView([lat,lng],18);
+map.setView([lat,lng],18)
 
 }else{
 
-userMarker.setLatLng([lat,lng]);
+userMarker.setLatLng([lat,lng])
 
 }
 
-});
+})
 
+const busMarkers = {}
 
-// FIREBASE BUS TRACKING
-db.ref("buses").on("value",snapshot=>{
+function updateBus(){
 
-const data=snapshot.val();
+fetch("/bus-data")
 
-for(let id in data){
+.then(res=>res.json())
 
-const bus=data[id];
+.then(buses=>{
 
-const lat=bus.lat;
-const lng=bus.lng;
+buses.forEach(bus=>{
 
-const info=
+if(!busMarkers[bus.id]){
+
+busMarkers[bus.id] = L.marker(
+[bus.lat,bus.lng],
+{icon:busIcon}
+)
+
+.addTo(map)
+
+.bindPopup(
 "<b>"+bus.name+"</b><br>"+
 "Crowd: "+bus.crowd+"<br>"+
-"ETA: "+bus.eta+" min";
-
-if(!buses[id]){
-
-buses[id]=L.marker([lat,lng],{icon:busIcon})
-.addTo(map)
-.bindPopup(info);
+"ETA: "+bus.eta
+)
 
 }else{
 
-buses[id].setLatLng([lat,lng]);
-buses[id].setPopupContent(info);
+busMarkers[bus.id].setLatLng([bus.lat,bus.lng])
 
 }
 
+})
+
+})
+
 }
 
-});
+setInterval(updateBus,2000)

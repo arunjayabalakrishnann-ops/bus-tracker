@@ -1,22 +1,26 @@
-const busId=prompt("Enter Bus Name (BUS1 or BUS2)");
+navigator.geolocation.watchPosition((pos)=>{
 
-const crowd=prompt("Crowd Level (Low / Medium / High)");
+const lat = pos.coords.latitude
+const lng = pos.coords.longitude
 
-navigator.geolocation.watchPosition(pos=>{
+const busId = document.getElementById("busId").value
 
-const lat=pos.coords.latitude;
-const lng=pos.coords.longitude;
+fetch("/update-bus",{
 
-db.ref("buses/"+busId).set({
+method:"POST",
 
-name:busId,
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+id:busId,
 lat:lat,
-lng:lng,
-crowd:crowd,
-eta:Math.floor(Math.random()*10+1)
+lng:lng
+})
 
-});
+})
 
 },{
 enableHighAccuracy:true
-});
+})

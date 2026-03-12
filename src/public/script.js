@@ -1,102 +1,95 @@
-// Initialize map
-const map = L.map("map").setView([11.0168, 76.9558], 17);
+const map = L.map("map").setView([11.0168,76.9558],17);
 
-// Map tiles
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+maxZoom:19
 }).addTo(map);
 
-// Bus Icon
+
+// BUS ICON
 const busIcon = L.icon({
-  iconUrl: "/bus.png",
-  iconSize: [40, 40],
-  iconAnchor: [20, 20]
+iconUrl:"/bus.png",
+iconSize:[40,40],
+iconAnchor:[20,20]
 });
 
-// User location marker
 let userMarker;
+let buses={};
 
-// Bus markers
-let buses = {};
 
-// Distance calculation
-function distance(lat1, lon1, lat2, lon2) {
+// DISTANCE FUNCTION
+function distance(lat1,lon1,lat2,lon2){
 
-  const R = 6371;
+const R=6371;
 
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+const dLat=(lat2-lat1)*Math.PI/180;
+const dLon=(lon2-lon1)*Math.PI/180;
 
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) *
-    Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) *
-    Math.sin(dLon / 2);
+const a=
+Math.sin(dLat/2)*Math.sin(dLat/2)+
+Math.cos(lat1*Math.PI/180)*
+Math.cos(lat2*Math.PI/180)*
+Math.sin(dLon/2)*Math.sin(dLon/2);
 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 
-  return R * c;
+return R*c;
 }
 
-// Track commuter location
-navigator.geolocation.watchPosition(position => {
 
-  const lat = position.coords.latitude;
-  const lng = position.coords.longitude;
+// USER LOCATION
+navigator.geolocation.watchPosition(pos=>{
 
-  if (!userMarker) {
+const lat=pos.coords.latitude;
+const lng=pos.coords.longitude;
 
-    userMarker = L.marker([lat, lng]).addTo(map)
-      .bindPopup("You are here");
+if(!userMarker){
 
-    map.setView([lat, lng], 18);
+userMarker=L.marker([lat,lng])
+.addTo(map)
+.bindPopup("Your Location");
 
-  } else {
+map.setView([lat,lng],18);
 
-    userMarker.setLatLng([lat, lng]);
+}else{
 
-  }
+userMarker.setLatLng([lat,lng]);
 
-  // Fetch buses
-  fetch("/bus-data")
-    .then(res => res.json())
-    .then(data => {
+}
 
-      data.forEach(bus => {
 
-        const d = distance(lat, lng, bus.lat, bus.lng);
+// FETCH BUS DATA
+fetch("/bus-data")
+.then(res=>res.json())
+.then(data=>{
 
-        const eta = (d / 20 * 60).toFixed(1);
+data.forEach(bus=>{
 
-        const info =
-          "<b>" + bus.name + "</b><br>" +
-          "Distance: " + d.toFixed(2) + " km<br>" +
-          "ETA: " + eta + " min<br>" +
-          "Crowd: " + bus.crowd;
+const d=distance(lat,lng,bus.lat,bus.lng);
+const eta=(d/20*60).toFixed(1);
 
-        if (!buses[bus.name]) {
+const info=
+"<b>"+bus.name+"</b><br>"+
+"Distance: "+d.toFixed(2)+" km<br>"+
+"ETA: "+eta+" min<br>"+
+"Crowd: "+bus.crowd;
 
-          buses[bus.name] =
-            L.marker([bus.lat, bus.lng], { icon: busIcon })
-              .addTo(map)
-              .bindPopup(info);
+if(!buses[bus.name]){
 
-        } else {
+buses[bus.name]=L.marker([bus.lat,bus.lng],{icon:busIcon})
+.addTo(map)
+.bindPopup(info);
 
-          buses[bus.name].setLatLng([bus.lat, bus.lng]);
-          buses[bus.name].setPopupContent(info);
+}else{
 
-        }
+buses[bus.name].setLatLng([bus.lat,bus.lng]);
+buses[bus.name].setPopupContent(info);
 
-      });
+}
 
-    });
+});
 
-}, {
+});
 
-  enableHighAccuracy: true,
-  maximumAge: 0,
-  timeout: 10000
-
+},{
+enableHighAccuracy:true
 });

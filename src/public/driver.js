@@ -1,33 +1,28 @@
 const busName = prompt("Enter Bus Name (BUS1 or BUS2)");
+const crowd = prompt("Crowd Level (Low / Medium / High)");
 
-const crowd = prompt("Crowd level (Low / Medium / High)");
+navigator.geolocation.watchPosition(pos=>{
 
-navigator.geolocation.watchPosition(position => {
+const lat=pos.coords.latitude;
+const lng=pos.coords.longitude;
 
-  const lat = position.coords.latitude;
-  const lng = position.coords.longitude;
+fetch("/update-bus",{
 
-  fetch("/update-bus", {
+method:"POST",
 
-    method: "POST",
+headers:{
+"Content-Type":"application/json"
+},
 
-    headers: {
-      "Content-Type": "application/json"
-    },
+body:JSON.stringify({
+name:busName,
+lat:lat,
+lng:lng,
+crowd:crowd
+})
 
-    body: JSON.stringify({
-      name: busName,
-      lat: lat,
-      lng: lng,
-      crowd: crowd
-    })
+});
 
-  });
-
-}, {
-
-  enableHighAccuracy: true,
-  maximumAge: 0,
-  timeout: 10000
-
+},{
+enableHighAccuracy:true
 });

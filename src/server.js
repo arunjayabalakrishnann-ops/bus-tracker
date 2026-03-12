@@ -1,32 +1,29 @@
 const express = require("express");
-const http = require("http");
-const socketIo = require("socket.io");
 const path = require("path");
+const http = require("http");
+const socketio = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketio(server);
 
+// serve public folder
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (req, res) => {
-res.sendFile(path.join(__dirname, "public", "index.html"));
+// routes
+app.get("/", (req,res)=>{
+res.sendFile(path.join(__dirname,"public","index.html"));
 });
 
-app.get("/driver.html", (req, res) => {
-res.sendFile(path.join(__dirname, "public", "driver.html"));
+app.get("/driver", (req,res)=>{
+res.sendFile(path.join(__dirname,"public","driver.html"));
 });
 
+// socket connection
 io.on("connection",(socket)=>{
-
-console.log("User connected");
 
 socket.on("busLocation",(data)=>{
 io.emit("busLocation",data);
-});
-
-socket.on("disconnect",()=>{
-console.log("User disconnected");
 });
 
 });

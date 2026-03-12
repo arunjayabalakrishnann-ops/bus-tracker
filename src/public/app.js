@@ -1,5 +1,3 @@
-// ── app.js — Bus Tracker Commuter App ───────────────────────────
-
 let userLat        = null;
 let userLng        = null;
 let selectedRoute  = null;
@@ -10,7 +8,6 @@ let fetchInterval  = null;
 let etaInterval    = null;
 let currentEtaMins = 0;
 
-// Bus icon using bus.png
 const busIcon = L.icon({
   iconUrl:     '/bus.png',
   iconSize:    [40, 40],
@@ -18,7 +15,6 @@ const busIcon = L.icon({
   popupAnchor: [0, -20]
 });
 
-// Route stops data — add your real stop coordinates here
 const routeStops = {
   route1: [
     { name: 'Stop A', lat: 11.0168, lng: 76.9558 },
@@ -32,7 +28,6 @@ const routeStops = {
   ]
 };
 
-// ── STEP 1 — GET USER GPS ────────────────────────────────────────
 function getLocation() {
   const btn = document.getElementById('btn-location');
   btn.textContent = '⏳ Getting your location...';
@@ -42,14 +37,13 @@ function getLocation() {
     function(position) {
       userLat = position.coords.latitude;
       userLng = position.coords.longitude;
-
       document.getElementById('step1').innerHTML = `
         <div class='step-tag'>Step 1 — Done ✅</div>
         <h2>📍 Location Found!</h2>
         <p style='color:#00BFA5;margin:0'>GPS captured. Now select your route.</p>`;
       showCard('step2');
     },
-    function(error) {
+    function() {
       btn.textContent = 'Allow Location Access';
       btn.disabled = false;
       alert('Location error. Please allow GPS and try again.');
@@ -57,7 +51,6 @@ function getLocation() {
   );
 }
 
-// ── STEP 2 — ROUTE SELECTED ──────────────────────────────────────
 function onRouteSelected() {
   selectedRoute = document.getElementById('route-select').value;
   if (!selectedRoute) return;
@@ -65,38 +58,28 @@ function onRouteSelected() {
   const stops      = routeStops[selectedRoute];
   const destSelect = document.getElementById('dest-select');
   destSelect.innerHTML = '<option value="">-- Select Your Stop --</option>';
-
   stops.forEach(function(stop, index) {
     const opt       = document.createElement('option');
     opt.value       = index;
     opt.textContent = stop.name;
     destSelect.appendChild(opt);
   });
-
   showCard('step3');
 }
 
-// ── STEP 3 — DESTINATION SELECTED ───────────────────────────────
 function onDestinationSelected() {
   if (document.getElementById('dest-select').value === '') return;
   showCard('step4');
-
-  // Clear old interval
   if (fetchInterval) clearInterval(fetchInterval);
-
-  // Fetch bus locations every 3 seconds
   fetchBuses();
   fetchInterval = setInterval(fetchBuses, 3000);
 }
 
-// ── FETCH BUS LOCATIONS FROM SERVER ─────────────────────────────
 function fetchBuses() {
   fetch('/buses')
     .then(res => res.json())
     .then(function(buses) {
-      if (!buses || Object.keys(buses).length === 0) {
-        showNoBus(); return;
-      }
+      if (!buses || Object.keys(buses).length === 0) { showNoBus(); return; }
 
       let nearestBus  = null;
       let nearestDist = Infinity;
@@ -122,7 +105,6 @@ function showNoBus() {
     '<p style="color:#FF5722;text-align:center;padding:20px">No buses active on this route right now.<br>Ask the driver to open the Driver page.</p>';
 }
 
-// ── SHOW BUS INFO ────────────────────────────────────────────────
 function showBusInfo(busId, busData, distKm) {
   const distMetres = Math.round(distKm * 1000);
   const distText   = distMetres < 1000 ? distMetres + ' m' : distKm.toFixed(1) + ' km';
@@ -165,7 +147,6 @@ function showBusInfo(busId, busData, distKm) {
   updateMap(busData.lat, busData.lng);
 }
 
-// ── MAP ──────────────────────────────────────────────────────────
 function updateMap(busLat, busLng) {
   if (!mapInstance) {
     mapInstance = L.map('map').setView([userLat, userLng], 14);
@@ -181,14 +162,11 @@ function updateMap(busLat, busLng) {
       })
     }).addTo(mapInstance).bindPopup('<b>📍 You are here</b>').openPopup();
 
-    // Draw route stops on map
     const stops = routeStops[selectedRoute];
     if (stops && stops.length >= 2) {
-      const latlngs = stops.map(s => [s.lat, s.lng]);
-      L.polyline(latlngs, {
+      L.polyline(stops.map(s => [s.lat, s.lng]), {
         color: '#FF5722', weight: 4, opacity: 0.7, dashArray: '8,6'
       }).addTo(mapInstance);
-
       stops.forEach(function(stop) {
         L.circleMarker([stop.lat, stop.lng], {
           radius: 5, color: '#FF5722',
@@ -213,7 +191,6 @@ function updateMap(busLat, busLng) {
   } catch(e) {}
 }
 
-// ── DISTANCE ─────────────────────────────────────────────────────
 function calcDistanceKm(lat1, lng1, lat2, lng2) {
   const R    = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -224,7 +201,6 @@ function calcDistanceKm(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// ── UTILITY ──────────────────────────────────────────────────────
 function showCard(id) {
   const el = document.getElementById(id);
   el.classList.remove('hidden');
@@ -241,14 +217,3 @@ function resetApp() {
   document.getElementById('dest-select').innerHTML = '<option value="">-- Select Your Stop --</option>';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-```
-
----
-
-**Also delete `firebase-config.js`** — you don't need it anymore.
-
-Then:
-```
-git add .
-git commit -m "Remove Firebase, use server instead"
-git push

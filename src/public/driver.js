@@ -1,8 +1,6 @@
-// ── driver.js — sends GPS to server every 5 seconds ─────────────
-
 function startTracking() {
   if (!navigator.geolocation) {
-    document.getElementById('status').textContent = '❌ GPS not supported on this device.';
+    document.getElementById('status').textContent = '❌ GPS not supported.';
     return;
   }
 
@@ -35,6 +33,3 @@ function startTracking() {
     { enableHighAccuracy: true }
   );
 }
-
-// Start tracking when page loads
-startTracking();

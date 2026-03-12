@@ -5,10 +5,8 @@ const app     = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "./public")));
 
-// Store bus locations in memory
 const buses = {};
 
-// Driver sends location here
 app.post("/update-bus", (req, res) => {
   const { id, lat, lng, route, crowd } = req.body;
   if (!id || !lat || !lng) return res.status(400).json({ error: "Missing data" });
@@ -16,12 +14,10 @@ app.post("/update-bus", (req, res) => {
   res.json({ ok: true });
 });
 
-// Commuter fetches all bus locations
 app.get("/buses", (req, res) => {
   res.json(buses);
 });
 
-// Routes
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "./public/index.html"));
 });

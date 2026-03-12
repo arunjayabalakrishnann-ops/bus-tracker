@@ -1,23 +1,52 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-<title>Driver Panel</title>
+  <title>Driver Panel — BusTracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; background: #121212; color: #fff; padding: 24px; }
+    h2   { color: #FF5722; }
+    label { display: block; margin-top: 16px; color: #aaa; font-size: 14px; }
+    select, input {
+      width: 100%; padding: 10px; margin-top: 6px;
+      background: #1e1e1e; color: #fff;
+      border: 1px solid #333; border-radius: 8px; font-size: 15px;
+    }
+    #status {
+      margin-top: 24px; padding: 14px;
+      background: #1e1e1e; border-radius: 8px;
+      color: #00BFA5; font-size: 14px;
+    }
+  </style>
 </head>
-
 <body>
+  <h2>🚌 Driver Panel</h2>
 
-<h2>Driver GPS</h2>
+  <label>Bus ID</label>
+  <select id="busId">
+    <option value="BusA">Bus A</option>
+    <option value="BusB">Bus B</option>
+    <option value="BusC">Bus C</option>
+  </select>
 
-<select id="busId">
-<option value="1">Bus A</option>
-<option value="2">Bus B</option>
-</select>
+  <label>Route</label>
+  <select id="routeId">
+    <option value="route1">Route 1</option>
+    <option value="route2">Route 2</option>
+  </select>
 
-<p>Location sharing active...</p>
+  <label>Crowd Level</label>
+  <select id="crowd">
+    <option value="Low">Low</option>
+    <option value="Medium">Medium</option>
+    <option value="High">High</option>
+  </select>
 
-<script src="driver.js"></script>
+  <div id="status">⏳ Waiting for GPS...</div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="driver.js"></script>
 </body>
-
 </html>

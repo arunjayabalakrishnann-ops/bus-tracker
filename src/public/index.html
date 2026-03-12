@@ -63,6 +63,8 @@
     <h2>🚌 Select Your Route</h2>
     <select id="route-select" onchange="onRouteSelected()">
       <option value="">-- Choose a Route --</option>
+      <option value="route1">Route 1</option>
+      <option value="route2">Route 2</option>
     </select>
   </div>
 
@@ -84,9 +86,6 @@
     <button onclick="resetApp()" style="margin-top:16px;background:#333">🔄 Track Another Bus</button>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="firebase-config.js"></script>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="app.js"></script>
 </body>

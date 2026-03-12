@@ -1,18 +1,16 @@
-// ── app.js — Bus Tracker Commuter App ──────────────────────────
+// ── app.js — Bus Tracker Commuter App ───────────────────────────
 
-let userLat          = null;
-let userLng          = null;
-let selectedRoute    = null;
-let mapInstance      = null;
-let busMarker        = null;
-let userMarker       = null;
-let routeLine        = null;
-let realtimeListener = null;
-let etaInterval      = null;
-let currentEtaMins   = 0;
-let routeStopsData   = [];
+let userLat        = null;
+let userLng        = null;
+let selectedRoute  = null;
+let mapInstance    = null;
+let busMarker      = null;
+let userMarker     = null;
+let fetchInterval  = null;
+let etaInterval    = null;
+let currentEtaMins = 0;
 
-// ── Bus Icon using bus.png ───────────────────────────────────────
+// Bus icon using bus.png
 const busIcon = L.icon({
   iconUrl:     '/bus.png',
   iconSize:    [40, 40],
@@ -20,20 +18,25 @@ const busIcon = L.icon({
   popupAnchor: [0, -20]
 });
 
-// ════════════════════════════════════════════════════════════════
-//  STEP 1 — GET USER GPS LOCATION
-// ════════════════════════════════════════════════════════════════
+// Route stops data — add your real stop coordinates here
+const routeStops = {
+  route1: [
+    { name: 'Stop A', lat: 11.0168, lng: 76.9558 },
+    { name: 'Stop B', lat: 11.0200, lng: 76.9600 },
+    { name: 'Stop C', lat: 11.0250, lng: 76.9650 }
+  ],
+  route2: [
+    { name: 'Stop X', lat: 11.0300, lng: 76.9700 },
+    { name: 'Stop Y', lat: 11.0350, lng: 76.9750 },
+    { name: 'Stop Z', lat: 11.0400, lng: 76.9800 }
+  ]
+};
+
+// ── STEP 1 — GET USER GPS ────────────────────────────────────────
 function getLocation() {
   const btn = document.getElementById('btn-location');
   btn.textContent = '⏳ Getting your location...';
   btn.disabled = true;
-
-  if (!navigator.geolocation) {
-    alert('Please use Google Chrome browser for GPS to work.');
-    btn.textContent = 'Allow Location Access';
-    btn.disabled = false;
-    return;
-  }
 
   navigator.geolocation.getCurrentPosition(
     function(position) {
@@ -43,130 +46,83 @@ function getLocation() {
       document.getElementById('step1').innerHTML = `
         <div class='step-tag'>Step 1 — Done ✅</div>
         <h2>📍 Location Found!</h2>
-        <p style='color:#00BFA5; margin:0'>GPS captured. Now select your bus route.</p>`;
+        <p style='color:#00BFA5;margin:0'>GPS captured. Now select your route.</p>`;
       showCard('step2');
-      loadRoutes();
     },
     function(error) {
       btn.textContent = 'Allow Location Access';
       btn.disabled = false;
-      if (error.code === 1)
-        alert('Location blocked. Click the lock icon → Allow Location → Refresh.');
-      else if (error.code === 2)
-        alert('GPS not available. Make sure location is ON on your device.');
-      else
-        alert('Location error. Please try again.');
+      alert('Location error. Please allow GPS and try again.');
     }
   );
 }
 
-// ════════════════════════════════════════════════════════════════
-//  STEP 2 — LOAD ROUTES FROM FIREBASE
-// ════════════════════════════════════════════════════════════════
-function loadRoutes() {
-  const select = document.getElementById('route-select');
-  select.innerHTML = '<option value="">⏳ Loading routes...</option>';
-
-  db.ref('routes').once('value')
-    .then(function(snapshot) {
-      const data = snapshot.val();
-      console.log('Firebase routes data:', data);
-
-      if (!data) {
-        select.innerHTML = '<option value="">❌ No routes found in Firebase</option>';
-        alert('No routes found. Please add route data to Firebase first.');
-        return;
-      }
-
-      select.innerHTML = '<option value="">-- Choose a Route --</option>';
-      Object.keys(data).forEach(function(key) {
-        const option       = document.createElement('option');
-        option.value       = key;
-        option.textContent = data[key].name || key;
-        select.appendChild(option);
-      });
-    })
-    .catch(function(error) {
-      console.error('Firebase error:', error);
-      select.innerHTML = '<option value="">❌ Firebase connection error</option>';
-      alert('Firebase error: ' + error.message);
-    });
-}
-
+// ── STEP 2 — ROUTE SELECTED ──────────────────────────────────────
 function onRouteSelected() {
-  const routeKey = document.getElementById('route-select').value;
-  if (!routeKey) return;
-  selectedRoute = routeKey;
+  selectedRoute = document.getElementById('route-select').value;
+  if (!selectedRoute) return;
 
-  db.ref('routes/' + routeKey + '/stops').once('value')
-    .then(function(snap) {
-      const stops = snap.val();
-      if (!stops) { alert('No stops found for this route.'); return; }
+  const stops      = routeStops[selectedRoute];
+  const destSelect = document.getElementById('dest-select');
+  destSelect.innerHTML = '<option value="">-- Select Your Stop --</option>';
 
-      routeStopsData = Array.isArray(stops) ? stops : Object.values(stops);
+  stops.forEach(function(stop, index) {
+    const opt       = document.createElement('option');
+    opt.value       = index;
+    opt.textContent = stop.name;
+    destSelect.appendChild(opt);
+  });
 
-      const destSelect = document.getElementById('dest-select');
-      destSelect.innerHTML = '<option value="">-- Select Your Stop --</option>';
-      routeStopsData.forEach(function(stop, index) {
-        const opt       = document.createElement('option');
-        opt.value       = index;
-        opt.textContent = stop.name;
-        destSelect.appendChild(opt);
-      });
-
-      showCard('step3');
-    })
-    .catch(function(err) { alert('Error loading stops: ' + err.message); });
+  showCard('step3');
 }
 
-// ════════════════════════════════════════════════════════════════
-//  STEP 3 — DESTINATION SELECTED
-// ════════════════════════════════════════════════════════════════
+// ── STEP 3 — DESTINATION SELECTED ───────────────────────────────
 function onDestinationSelected() {
-  const destIndex = document.getElementById('dest-select').value;
-  if (destIndex === '') return;
-
+  if (document.getElementById('dest-select').value === '') return;
   showCard('step4');
 
-  if (realtimeListener) { db.ref('buses').off('value', realtimeListener); realtimeListener = null; }
-  if (etaInterval)      { clearInterval(etaInterval); etaInterval = null; }
+  // Clear old interval
+  if (fetchInterval) clearInterval(fetchInterval);
 
-  realtimeListener = db.ref('buses').on('value', function(snapshot) {
-    findAndShowNearestBus(snapshot.val());
-  });
+  // Fetch bus locations every 3 seconds
+  fetchBuses();
+  fetchInterval = setInterval(fetchBuses, 3000);
 }
 
-// ════════════════════════════════════════════════════════════════
-//  FIND NEAREST BUS
-// ════════════════════════════════════════════════════════════════
-function findAndShowNearestBus(allBuses) {
-  if (!allBuses) { showNoBus(); return; }
+// ── FETCH BUS LOCATIONS FROM SERVER ─────────────────────────────
+function fetchBuses() {
+  fetch('/buses')
+    .then(res => res.json())
+    .then(function(buses) {
+      if (!buses || Object.keys(buses).length === 0) {
+        showNoBus(); return;
+      }
 
-  let nearestBus  = null;
-  let nearestDist = Infinity;
-  let nearestId   = null;
+      let nearestBus  = null;
+      let nearestDist = Infinity;
+      let nearestId   = null;
 
-  Object.entries(allBuses).forEach(function([busId, busData]) {
-    if (busData.route !== selectedRoute) return;
-    const dist = calcDistanceKm(userLat, userLng, busData.lat, busData.lng);
-    if (dist < nearestDist) {
-      nearestDist = dist;
-      nearestBus  = busData;
-      nearestId   = busId;
-    }
-  });
+      Object.entries(buses).forEach(function([busId, busData]) {
+        if (busData.route !== selectedRoute) return;
+        const dist = calcDistanceKm(userLat, userLng, busData.lat, busData.lng);
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearestBus  = busData;
+          nearestId   = busId;
+        }
+      });
 
-  nearestBus ? showBusInfo(nearestId, nearestBus, nearestDist) : showNoBus();
+      nearestBus ? showBusInfo(nearestId, nearestBus, nearestDist) : showNoBus();
+    })
+    .catch(() => showNoBus());
 }
 
 function showNoBus() {
   document.getElementById('bus-info-container').innerHTML =
-    '<p style="color:#FF5722;text-align:center;padding:20px">No buses active on this route right now.</p>';
+    '<p style="color:#FF5722;text-align:center;padding:20px">No buses active on this route right now.<br>Ask the driver to open the Driver page.</p>';
 }
 
-// ════════════════════════════════════════════════════════════════
-//  SHOW BUS INFO
-// ════════════════════════════════════════════════════════════════
+// ── SHOW BUS INFO ────────────────────────────────────────────────
 function showBusInfo(busId, busData, distKm) {
   const distMetres = Math.round(distKm * 1000);
   const distText   = distMetres < 1000 ? distMetres + ' m' : distKm.toFixed(1) + ' km';
@@ -209,9 +165,7 @@ function showBusInfo(busId, busData, distKm) {
   updateMap(busData.lat, busData.lng);
 }
 
-// ════════════════════════════════════════════════════════════════
-//  MAP
-// ════════════════════════════════════════════════════════════════
+// ── MAP ──────────────────────────────────────────────────────────
 function updateMap(busLat, busLng) {
   if (!mapInstance) {
     mapInstance = L.map('map').setView([userLat, userLng], 14);
@@ -227,13 +181,15 @@ function updateMap(busLat, busLng) {
       })
     }).addTo(mapInstance).bindPopup('<b>📍 You are here</b>').openPopup();
 
-    if (routeStopsData.length >= 2) {
-      const latlngs = routeStopsData.map(s => [s.lat, s.lng]);
-      routeLine = L.polyline(latlngs, {
-        color: '#FF5722', weight: 4, opacity: 0.7, dashArray: '8, 6'
+    // Draw route stops on map
+    const stops = routeStops[selectedRoute];
+    if (stops && stops.length >= 2) {
+      const latlngs = stops.map(s => [s.lat, s.lng]);
+      L.polyline(latlngs, {
+        color: '#FF5722', weight: 4, opacity: 0.7, dashArray: '8,6'
       }).addTo(mapInstance);
 
-      routeStopsData.forEach(function(stop) {
+      stops.forEach(function(stop) {
         L.circleMarker([stop.lat, stop.lng], {
           radius: 5, color: '#FF5722',
           fillColor: 'white', fillOpacity: 1, weight: 2
@@ -242,7 +198,6 @@ function updateMap(busLat, busLng) {
     }
   }
 
-  // Bus marker — uses bus.png
   if (busMarker) {
     busMarker.setLatLng([busLat, busLng]);
   } else {
@@ -252,14 +207,13 @@ function updateMap(busLat, busLng) {
   }
 
   try {
-    const group = L.featureGroup([userMarker, busMarker]);
-    mapInstance.fitBounds(group.getBounds().pad(0.3));
+    mapInstance.fitBounds(
+      L.featureGroup([userMarker, busMarker]).getBounds().pad(0.3)
+    );
   } catch(e) {}
 }
 
-// ════════════════════════════════════════════════════════════════
-//  DISTANCE FORMULA
-// ════════════════════════════════════════════════════════════════
+// ── DISTANCE ─────────────────────────────────────────────────────
 function calcDistanceKm(lat1, lng1, lat2, lng2) {
   const R    = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -270,9 +224,7 @@ function calcDistanceKm(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// ════════════════════════════════════════════════════════════════
-//  UTILITY
-// ════════════════════════════════════════════════════════════════
+// ── UTILITY ──────────────────────────────────────────────────────
 function showCard(id) {
   const el = document.getElementById(id);
   el.classList.remove('hidden');
@@ -280,13 +232,23 @@ function showCard(id) {
 }
 
 function resetApp() {
-  if (realtimeListener) { db.ref('buses').off('value', realtimeListener); realtimeListener = null; }
-  if (etaInterval)      { clearInterval(etaInterval); etaInterval = null; }
-  if (mapInstance)      { mapInstance.remove(); mapInstance = null; busMarker = null; userMarker = null; routeLine = null; }
+  if (fetchInterval) { clearInterval(fetchInterval); fetchInterval = null; }
+  if (etaInterval)   { clearInterval(etaInterval);   etaInterval = null; }
+  if (mapInstance)   { mapInstance.remove(); mapInstance = null; busMarker = null; userMarker = null; }
   document.getElementById('step3').classList.add('hidden');
   document.getElementById('step4').classList.add('hidden');
   document.getElementById('route-select').value = '';
   document.getElementById('dest-select').innerHTML = '<option value="">-- Select Your Stop --</option>';
-  routeStopsData = [];
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+```
+
+---
+
+**Also delete `firebase-config.js`** — you don't need it anymore.
+
+Then:
+```
+git add .
+git commit -m "Remove Firebase, use server instead"
+git push

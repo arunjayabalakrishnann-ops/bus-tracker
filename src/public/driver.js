@@ -1,26 +1,40 @@
-// ── driver.js — Bus Driver Location Sender ──────────────────────
+// ── driver.js — sends GPS to server every 5 seconds ─────────────
 
-navigator.geolocation.watchPosition(
-  function(pos) {
-    const lat   = pos.coords.latitude;
-    const lng   = pos.coords.longitude;
-    const busId = document.getElementById('busId').value;
-    const route = document.getElementById('routeId').value;
+function startTracking() {
+  if (!navigator.geolocation) {
+    document.getElementById('status').textContent = '❌ GPS not supported on this device.';
+    return;
+  }
 
-    db.ref('buses/' + busId).set({
-      lat:       lat,
-      lng:       lng,
-      route:     route,
-      crowd:     document.getElementById('crowd').value || 'Low',
-      updatedAt: Date.now()
-    });
+  document.getElementById('status').textContent = '⏳ Getting GPS...';
 
-    document.getElementById('status').textContent =
-      '✅ Sharing live — Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5);
-  },
-  function(error) {
-    document.getElementById('status').textContent =
-      '❌ GPS error: ' + error.message;
-  },
-  { enableHighAccuracy: true }
-);
+  navigator.geolocation.watchPosition(
+    function(pos) {
+      const lat   = pos.coords.latitude;
+      const lng   = pos.coords.longitude;
+      const busId = document.getElementById('busId').value;
+      const route = document.getElementById('routeId').value;
+      const crowd = document.getElementById('crowd').value;
+
+      fetch('/update-bus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: busId, lat, lng, route, crowd })
+      })
+      .then(() => {
+        document.getElementById('status').textContent =
+          '✅ Live — Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5);
+      })
+      .catch(() => {
+        document.getElementById('status').textContent = '❌ Failed to send location.';
+      });
+    },
+    function(error) {
+      document.getElementById('status').textContent = '❌ GPS error: ' + error.message;
+    },
+    { enableHighAccuracy: true }
+  );
+}
+
+// Start tracking when page loads
+startTracking();

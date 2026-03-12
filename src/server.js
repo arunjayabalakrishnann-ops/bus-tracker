@@ -1,55 +1,34 @@
-const express = require("express")
-const path = require("path")
+const express = require("express");
+const path    = require("path");
+const app     = express();
 
-const app = express()
-const PORT = process.env.PORT || 3000
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "./public")));
 
-app.use(express.json())
+// Store bus locations in memory
+const buses = {};
 
-// SERVE PUBLIC FILES
-app.use(express.static(path.join(__dirname,"src/public")))
+// Driver sends location here
+app.post("/update-bus", (req, res) => {
+  const { id, lat, lng, route, crowd } = req.body;
+  if (!id || !lat || !lng) return res.status(400).json({ error: "Missing data" });
+  buses[id] = { lat, lng, route, crowd, updatedAt: Date.now() };
+  res.json({ ok: true });
+});
 
-// BUS DATA
-let buses = [
-{
-id:1,
-name:"Campus Bus A",
-lat:11.0168,
-lng:76.9558,
-crowd:"Medium",
-eta:"5 mins"
-},
-{
-id:2,
-name:"Campus Bus B",
-lat:11.0170,
-lng:76.9560,
-crowd:"Low",
-eta:"7 mins"
-}
-]
+// Commuter fetches all bus locations
+app.get("/buses", (req, res) => {
+  res.json(buses);
+});
 
-// DRIVER UPDATES
-app.post("/update-bus",(req,res)=>{
+// Routes
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "./public/index.html"));
+});
 
-const {id,lat,lng} = req.body
+app.get("/driver", (req, res) => {
+  res.sendFile(path.join(__dirname, "./public/driver.html"));
+});
 
-const bus = buses.find(b=>b.id==id)
-
-if(bus){
-bus.lat = lat
-bus.lng = lng
-}
-
-res.send("updated")
-
-})
-
-// SEND BUS DATA
-app.get("/bus-data",(req,res)=>{
-res.json(buses)
-})
-
-app.listen(PORT,()=>{
-console.log("Server running on port "+PORT)
-})
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
